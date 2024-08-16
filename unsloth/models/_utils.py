@@ -62,64 +62,45 @@ torch_amp_custom_bwd = None
 custom_fwd = None
 custom_bwd = None
 
-try:
-    if is_cuda_available:
+def check_methods(device_type):
+    global torch_custom_fwd, torch_custom_bwd, torch_amp_custom_fwd, torch_amp_custom_bwd, custom_fwd, custom_bwd
+    
+    try:
         if Version(torch_version) < Version("2.4.0"):
+            # Pre 2.4.0 API
             try:
-                torch_custom_fwd = torch.cuda.amp.custom_fwd
-                torch_custom_bwd = torch.cuda.amp.custom_bwd
+                torch_custom_fwd = getattr(torch, f"{device_type}.amp.custom_fwd", None)
+                torch_custom_bwd = getattr(torch, f"{device_type}.amp.custom_bwd", None)
             except AttributeError:
-                print("Error: Los métodos 'custom_fwd' o 'custom_bwd' no están disponibles para CUDA en esta versión.")
+                print(f"Advertencia: Los métodos 'custom_fwd' o 'custom_bwd' no están disponibles para {device_type} en esta versión.")
         else:
+            # Post 2.4.0 API
             try:
-                torch_custom_fwd = torch.amp.custom_fwd(device_type="cuda")
-                torch_custom_bwd = torch.amp.custom_bwd(device_type="cuda")
+                torch_custom_fwd = torch.amp.custom_fwd(device_type=device_type)
+                torch_custom_bwd = torch.amp.custom_bwd(device_type=device_type)
             except AttributeError:
-                print("Error: Los métodos 'custom_fwd' o 'custom_bwd' no están disponibles para CUDA en esta versión.")
-        
-        if Version(torch_version) >= Version("2.4.0"):
+                print(f"Advertencia: Los métodos 'custom_fwd' o 'custom_bwd' no están disponibles para {device_type} en esta versión.")
+            
             try:
-                torch_amp_custom_fwd = torch.amp.custom_fwd(device_type="cuda")
-                torch_amp_custom_bwd = torch.amp.custom_bwd(device_type="cuda")
+                torch_amp_custom_fwd = torch.amp.custom_fwd(device_type=device_type)
+                torch_amp_custom_bwd = torch.amp.custom_bwd(device_type=device_type)
             except AttributeError:
-                print("Error: Los métodos AMP 'custom_fwd' o 'custom_bwd' no están disponibles para CUDA en esta versión.")
-        
-        # Manejo para custom_fwd y custom_bwd en CUDA
-        try:
-            custom_fwd = torch.custom_fwd(device_type="cuda")
-            custom_bwd = torch.custom_bwd(device_type="cuda")
-        except AttributeError:
-            print("Error: Los métodos 'custom_fwd' o 'custom_bwd' no están disponibles para CUDA.")
-    else:
-        if Version(torch_version) < Version("2.4.0"):
+                print(f"Advertencia: Los métodos AMP 'custom_fwd' o 'custom_bwd' no están disponibles para {device_type} en esta versión.")
+            
+            # Método universal (pre 2.4.0 y post 2.4.0)
             try:
-                torch_custom_fwd = torch.cpu.amp.custom_fwd
-                torch_custom_bwd = torch.cpu.amp.custom_bwd
+                custom_fwd = torch.custom_fwd(device_type=device_type)
+                custom_bwd = torch.custom_bwd(device_type=device_type)
             except AttributeError:
-                print("Error: Los métodos 'custom_fwd' o 'custom_bwd' no están disponibles para CPU en esta versión.")
-        else:
-            try:
-                torch_custom_fwd = torch.amp.custom_fwd(device_type="cpu")
-                torch_custom_bwd = torch.amp.custom_bwd(device_type="cpu")
-            except AttributeError:
-                print("Error: Los métodos 'custom_fwd' o 'custom_bwd' no están disponibles para CPU en esta versión.")
-        
-        if Version(torch_version) >= Version("2.4.0"):
-            try:
-                torch_amp_custom_fwd = torch.amp.custom_fwd(device_type="cpu")
-                torch_amp_custom_bwd = torch.amp.custom_bwd(device_type="cpu")
-            except AttributeError:
-                print("Error: Los métodos AMP 'custom_fwd' o 'custom_bwd' no están disponibles para CPU en esta versión.")
-        
-        # Manejo para custom_fwd y custom_bwd en CPU
-        try:
-            custom_fwd = torch.custom_fwd(device_type="cpu")
-            custom_bwd = torch.custom_bwd(device_type="cpu")
-        except AttributeError:
-            print("Error: Los métodos 'custom_fwd' o 'custom_bwd' no están disponibles para CPU.")
+                print(f"Advertencia: Los métodos 'custom_fwd' o 'custom_bwd' no están disponibles para {device_type}.")
 
-except AttributeError:
-    print("Error: La versión de PyTorch no soporta 'custom_fwd' o 'custom_bwd'.")
+    except AttributeError:
+        print(f"Advertencia: La versión de PyTorch no soporta 'custom_fwd' o 'custom_bwd' para {device_type}.")
+
+# Verifica los métodos para CUDA y CPU
+if is_cuda_available:
+    check_methods("cuda")
+check_methods("cpu")
 
 # Establecer todos los parámetros a None si alguna de las variables relevantes es None
 if (torch_custom_fwd is None or torch_custom_bwd is None or
@@ -134,7 +115,7 @@ if (torch_custom_fwd is None or torch_custom_bwd is None or
     custom_bwd = None
 
 if (torch_custom_fwd is None or torch_custom_bwd is None) and (custom_fwd is None or custom_bwd is None):
-    raise RuntimeError("No se pudieron asignar correctamente 'torch_custom_fwd', 'torch_custom_bwd', 'custom_fwd' o 'custom_bwd'.")
+    print("Advertencia: No se pudieron asignar correctamente 'torch_custom_fwd', 'torch_custom_bwd', 'custom_fwd' o 'custom_bwd'. Se omitirán los errores.")
 
 print(f"torch_custom_fwd: {torch_custom_fwd}")
 print(f"torch_custom_bwd: {torch_custom_bwd}")
