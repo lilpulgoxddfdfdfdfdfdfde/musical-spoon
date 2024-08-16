@@ -90,7 +90,6 @@ try:
             custom_bwd = torch.custom_bwd(device_type="cuda")
         except AttributeError:
             print("Error: Los métodos 'custom_fwd' o 'custom_bwd' no están disponibles para CUDA.")
-
     else:
         if Version(torch_version) < Version("2.4.0"):
             try:
@@ -121,6 +120,18 @@ try:
 
 except AttributeError:
     print("Error: La versión de PyTorch no soporta 'custom_fwd' o 'custom_bwd'.")
+
+# Establecer todos los parámetros a None si alguna de las variables relevantes es None
+if (torch_custom_fwd is None or torch_custom_bwd is None or
+    torch_amp_custom_fwd is None or torch_amp_custom_bwd is None or
+    custom_fwd is None or custom_bwd is None):
+    
+    torch_custom_fwd = None
+    torch_custom_bwd = None
+    torch_amp_custom_fwd = None
+    torch_amp_custom_bwd = None
+    custom_fwd = None
+    custom_bwd = None
 
 if (torch_custom_fwd is None or torch_custom_bwd is None) and (custom_fwd is None or custom_bwd is None):
     raise RuntimeError("No se pudieron asignar correctamente 'torch_custom_fwd', 'torch_custom_bwd', 'custom_fwd' o 'custom_bwd'.")
