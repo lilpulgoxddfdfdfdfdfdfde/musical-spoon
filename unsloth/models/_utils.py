@@ -21,7 +21,7 @@ __all__ = [
     "torch_compile_options",
     "patch_linear_scaling",
     "patch_llama_rope_scaling",
-    "check_nvidia",
+    "check_gpu_memory",  # Renamed function
     "create_boolean_mask",
     "torch_amp_custom_fwd",
     "torch_amp_custom_bwd",
@@ -79,10 +79,11 @@ import bitsandbytes as bnb
 from transformers import AutoTokenizer
 from transformers.utils.import_utils import _is_package_available
 
+# Detect if a GPU is available and its compute capability
 try:
     if torch.cuda.is_available():
         major_version, minor_version = torch.cuda.get_device_capability()
-        print(f"Nvidia GPU detected with CUDA capability: {major_version}.{minor_version}")
+        print(f"GPU detected with CUDA capability: {major_version}.{minor_version}")
     else:
         print("No GPU available. Using CPU.")
         major_version, minor_version = None, None 
@@ -95,7 +96,8 @@ SUPPORTS_BFLOAT16 = False
 HAS_FLASH_ATTENTION = False
 HAS_FLASH_ATTENTION_SOFTCAPPING = False
 
-if major_version == 8:
+# Check for bfloat16 support and FlashAttention availability
+if major_version is not None and major_version == 8:
     SUPPORTS_BFLOAT16 = True
     if _is_package_available("flash_attn"):
         try:
@@ -151,6 +153,7 @@ if False:
     )
 pass
 
+# Check for xformers and torch version compatibility
 if   Version(torch_version) < Version("2.2.0") and Version(xformers_version) >= Version("0.0.24"):
     raise ImportError(
         f"Unsloth: You have torch = {torch_version} but xformers = {xformers_version}.\n"\
@@ -845,18 +848,18 @@ def patch_llama_rope_scaling(
 pass
 
 
-def check_nvidia():
+def check_gpu_memory():  # Renamed function
     output = np.array([0,])
     try:
         output = subprocess.check_output("nvidia-smi --query-gpu=memory.used --format=csv", shell = True)
-        output = re.findall(rb'([\d]{1,})[\s]{1,}M', output)
+        output = re.findall(rb'([\d]{1,})[\s]{1,}MiB', output)
         output = np.array([int(x.decode('utf-8'))/1024 for x in output])
     except:
-        if not torch.cuda.is_available():
-            raise RuntimeError("Unsloth: We do not support AMD / Intel machines yet - it is a work in progress!")    
+        # If nvidia-smi is not available, assume no GPU is being used
+        pass  
     return output
 pass
-PRE_CHECK = check_nvidia()
+PRE_CHECK = check_gpu_memory()
 
 
 def create_boolean_mask(n = 4096, sliding_window = 2048):
