@@ -52,44 +52,48 @@ logging.getLogger("transformers.tokenization_utils_base").setLevel(logging.CRITI
 import torch
 from packaging.version import Version
 
-# Obtener la versión de PyTorch
 torch_version = torch.__version__
-
-# Determinar si CUDA está disponible
 is_cuda_available = torch.cuda.is_available()
+
+torch_custom_fwd = None
+torch_custom_bwd = None
 
 try:
     if is_cuda_available:
         if Version(torch_version) < Version("2.4.0"):
-            # Para versiones anteriores a 2.4.0 y CUDA disponible
-            torch_amp_custom_fwd = torch.cuda.amp.custom_fwd
-            torch_amp_custom_bwd = torch.cuda.amp.custom_bwd
+            torch_custom_fwd = torch.cuda.amp.custom_fwd
+            torch_custom_bwd = torch.cuda.amp.custom_bwd
         else:
-            # Para versiones 2.4.0 y superiores y CUDA disponible
-            torch_amp_custom_fwd = torch.amp.custom_fwd(device_type="cuda")
-            torch_amp_custom_bwd = torch.amp.custom_bwd(device_type="cuda")
+            torch_custom_fwd = torch.amp.custom_fwd(device_type="cuda")
+            torch_custom_bwd = torch.amp.custom_bwd(device_type="cuda")
     else:
         if Version(torch_version) < Version("2.4.0"):
-            # Para versiones anteriores a 2.4.0 y sin CUDA
-            torch_amp_custom_fwd = torch.cpu.amp.custom_fwd
-            torch_amp_custom_bwd = torch.cpu.amp.custom_bwd
+            torch_custom_fwd = torch.cpu.amp.custom_fwd
+            torch_custom_bwd = torch.cpu.amp.custom_bwd
         else:
-            # Para versiones 2.4.0 y superiores y sin CUDA
-            torch_amp_custom_fwd = torch.amp.custom_fwd(device_type="cpu")
-            torch_amp_custom_bwd = torch.amp.custom_bwd(device_type="cpu")
-
-    # Asignar valores comunes
-    torch_custom_fwd = torch_amp_custom_fwd
-    torch_custom_bwd = torch_amp_custom_bwd
+            torch_custom_fwd = torch.amp.custom_fwd(device_type="cpu")
+            torch_custom_bwd = torch.amp.custom_bwd(device_type="cpu")
 
 except AttributeError:
-    # Fallback para versiones de PyTorch sin soporte de AMP
+    print("Error: La versión de PyTorch no soporta 'custom_fwd' o 'custom_bwd'")
     if is_cuda_available:
-        torch_custom_fwd = torch.cuda.amp.custom_fwd
-        torch_custom_bwd = torch.cuda.amp.custom_bwd
+        try:
+            torch_custom_fwd = torch.cuda.amp.custom_fwd
+            torch_custom_bwd = torch.cuda.amp.custom_bwd
+        except AttributeError:
+            print("Error: Los métodos de AMP predeterminados para CUDA no están disponibles.")
     else:
-        torch_custom_fwd = torch.cpu.amp.custom_fwd
-        torch_custom_bwd = torch.cpu.amp.custom_bwd
+        try:
+            torch_custom_fwd = torch.cpu.amp.custom_fwd
+            torch_custom_bwd = torch.cpu.amp.custom_bwd
+        except AttributeError:
+            print("Error: Los métodos de AMP predeterminados para CPU no están disponibles.")
+
+if torch_custom_fwd is None or torch_custom_bwd is None:
+    raise RuntimeError("No se pudieron asignar correctamente 'torch_custom_fwd' o 'torch_custom_bwd'.")
+
+print(f"torch_custom_fwd: {torch_custom_fwd}")
+print(f"torch_custom_bwd: {torch_custom_bwd}")
 
 import transformers.cache_utils
 if hasattr(transformers.cache_utils, "DynamicCache") and \
