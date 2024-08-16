@@ -592,7 +592,6 @@ pass
 
 class Unsloth_Offloaded_Gradient_Checkpointer(torch.autograd.Function):
     @staticmethod
-    @torch_amp_custom_fwd
     def forward(ctx, forward_function, hidden_states, *args):
         saved_hidden_states = hidden_states.to("cpu", non_blocking = True)
         with torch.no_grad():
@@ -604,7 +603,6 @@ class Unsloth_Offloaded_Gradient_Checkpointer(torch.autograd.Function):
     pass
 
     @staticmethod
-    @torch_amp_custom_bwd
     def backward(ctx, dY):
         (hidden_states,) = ctx.saved_tensors
         hidden_states = hidden_states.to("cpu", non_blocking = True).detach()
