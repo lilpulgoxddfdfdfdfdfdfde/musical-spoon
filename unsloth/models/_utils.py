@@ -60,6 +60,8 @@ if Version(torch_version) < Version("2.4.0"):
     torch_amp_custom_bwd_cpu = torch.cpu.amp.custom_bwd
     torch_amp_custom_fwd = torch.cpu.amp.custom_fwd
     torch_amp_custom_bwd = torch.cpu.amp.custom_bwd
+    torch_custom_fwd = torch.cpu.amp.custom_fwd
+    torch_custom_bwd = torch.cpu.amp.custom_bwd
 else:
     # Para versiones 2.4.0 y superiores
     torch_amp_custom_fwd_cuda = torch.amp.custom_fwd(device_type="cuda")
