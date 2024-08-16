@@ -77,37 +77,52 @@ def check_methods(device_type):
             # Post 2.4.0 API
             try:
                 torch_custom_fwd = torch.amp.custom_fwd(device_type=device_type)
-                torch_custom_bwd = torch.amp.custom_bwd(device_type=device_type)
             except AttributeError as e:
                 if "custom_fwd" in str(e):
                     print("Advertencia: module 'torch.amp' has no attribute 'custom_fwd'.")
+                else:
+                    print(f"Advertencia: Los métodos 'custom_fwd' no están disponibles para {device_type} en esta versión.")
+                
+            try:
+                torch_custom_bwd = torch.amp.custom_bwd(device_type=device_type)
+            except AttributeError as e:
                 if "custom_bwd" in str(e):
                     print("Advertencia: module 'torch.amp' has no attribute 'custom_bwd'.")
                 else:
-                    print(f"Advertencia: Los métodos 'custom_fwd' o 'custom_bwd' no están disponibles para {device_type} en esta versión.")
+                    print(f"Advertencia: Los métodos 'custom_bwd' no están disponibles para {device_type} en esta versión.")
             
             try:
                 torch_amp_custom_fwd = torch.amp.custom_fwd(device_type=device_type)
-                torch_amp_custom_bwd = torch.amp.custom_bwd(device_type=device_type)
             except AttributeError as e:
                 if "custom_fwd" in str(e):
                     print("Advertencia: module 'torch.amp' has no attribute 'custom_fwd'.")
+                else:
+                    print(f"Advertencia: Los métodos AMP 'custom_fwd' no están disponibles para {device_type} en esta versión.")
+                
+            try:
+                torch_amp_custom_bwd = torch.amp.custom_bwd(device_type=device_type)
+            except AttributeError as e:
                 if "custom_bwd" in str(e):
                     print("Advertencia: module 'torch.amp' has no attribute 'custom_bwd'.")
                 else:
-                    print(f"Advertencia: Los métodos AMP 'custom_fwd' o 'custom_bwd' no están disponibles para {device_type} en esta versión.")
+                    print(f"Advertencia: Los métodos AMP 'custom_bwd' no están disponibles para {device_type} en esta versión.")
             
             # Método universal (pre 2.4.0 y post 2.4.0)
             try:
                 custom_fwd = torch.custom_fwd(device_type=device_type)
-                custom_bwd = torch.custom_bwd(device_type=device_type)
             except AttributeError as e:
                 if "custom_fwd" in str(e):
                     print("Advertencia: module 'torch.fwd' has no attribute 'custom_fwd'.")
+                else:
+                    print(f"Advertencia: El método 'custom_fwd' no está disponible para {device_type} en esta versión.")
+                
+            try:
+                custom_bwd = torch.custom_bwd(device_type=device_type)
+            except AttributeError as e:
                 if "custom_bwd" in str(e):
                     print("Advertencia: module 'torch.fwd' has no attribute 'custom_bwd'.")
                 else:
-                    print(f"Advertencia: Los métodos 'custom_fwd' o 'custom_bwd' no están disponibles para {device_type}.")
+                    print(f"Advertencia: El método 'custom_bwd' no está disponible para {device_type} en esta versión.")
 
     except AttributeError:
         print(f"Advertencia: La versión de PyTorch no soporta 'custom_fwd' o 'custom_bwd' para {device_type}.")
