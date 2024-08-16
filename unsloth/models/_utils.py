@@ -57,6 +57,8 @@ is_cuda_available = torch.cuda.is_available()
 
 torch_custom_fwd = None
 torch_custom_bwd = None
+torch_amp_custom_fwd = None
+torch_amp_custom_bwd = None
 
 try:
     if is_cuda_available:
@@ -66,6 +68,11 @@ try:
         else:
             torch_custom_fwd = torch.amp.custom_fwd(device_type="cuda")
             torch_custom_bwd = torch.amp.custom_bwd(device_type="cuda")
+        
+        if Version(torch_version) >= Version("2.4.0"):
+            torch_amp_custom_fwd = torch.amp.custom_fwd(device_type="cuda")
+            torch_amp_custom_bwd = torch.amp.custom_bwd(device_type="cuda")
+
     else:
         if Version(torch_version) < Version("2.4.0"):
             torch_custom_fwd = torch.cpu.amp.custom_fwd
@@ -73,6 +80,10 @@ try:
         else:
             torch_custom_fwd = torch.amp.custom_fwd(device_type="cpu")
             torch_custom_bwd = torch.amp.custom_bwd(device_type="cpu")
+        
+        if Version(torch_version) >= Version("2.4.0"):
+            torch_amp_custom_fwd = torch.amp.custom_fwd(device_type="cpu")
+            torch_amp_custom_bwd = torch.amp.custom_bwd(device_type="cpu")
 
 except AttributeError:
     print("Error: La versión de PyTorch no soporta 'custom_fwd' o 'custom_bwd'")
@@ -94,6 +105,8 @@ if torch_custom_fwd is None or torch_custom_bwd is None:
 
 print(f"torch_custom_fwd: {torch_custom_fwd}")
 print(f"torch_custom_bwd: {torch_custom_bwd}")
+print(f"torch_amp_custom_fwd: {torch_amp_custom_fwd}")
+print(f"torch_amp_custom_bwd: {torch_amp_custom_bwd}")
 
 import transformers.cache_utils
 if hasattr(transformers.cache_utils, "DynamicCache") and \
