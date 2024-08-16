@@ -52,8 +52,18 @@ logging.getLogger("transformers.tokenization_utils_base").setLevel(logging.CRITI
 import torch
 torch_version = torch.__version__
 
-torch_amp_custom_fwd = torch.amp.custom_fwd(device_type = "cpu")
-torch_amp_custom_bwd = torch.amp.custom_bwd(device_type = "cpu")
+if Version(torch_version) < Version("2.4.0"):
+    # Para versiones anteriores a 2.4.0
+    torch_amp_custom_fwd_cuda = torch.cuda.amp.custom_fwd
+    torch_amp_custom_bwd_cuda = torch.cuda.amp.custom_bwd
+    torch_amp_custom_fwd_cpu = torch.cpu.amp.custom_fwd
+    torch_amp_custom_bwd_cpu = torch.cpu.amp.custom_bwd
+else:
+    # Para versiones 2.4.0 y superiores
+    torch_amp_custom_fwd_cuda = torch.amp.custom_fwd(device_type="cuda")
+    torch_amp_custom_bwd_cuda = torch.amp.custom_bwd(device_type="cuda")
+    torch_amp_custom_fwd_cpu = torch.amp.custom_fwd(device_type="cpu")
+    torch_amp_custom_bwd_cpu = torch.amp.custom_bwd(device_type="cpu")
 
 
 import transformers.cache_utils
